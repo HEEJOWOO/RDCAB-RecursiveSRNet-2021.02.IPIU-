@@ -1,0 +1,207 @@
+import argparse
+import torch
+import torch.backends.cudnn as cudnn
+import numpy as np
+import PIL.Image as pil_image
+
+from models import Net
+from utils import convert_rgb_to_y, denormalize, calc_psnr
+import time
+
+#test : Set5, Set14, BSD100, Urban100
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--B', type=int, default=1)
+    parser.add_argument('--U', type=int, default=9)
+    parser.add_argument('--weights-file', type=str, required=True)
+    parser.add_argument('--scale', type=int, default=4)
+    parser.add_argument('--num-features', type=int, default=64)
+    parser.add_argument('--growth-rate', type=int, default=64)
+    parser.add_argument('--num-layers', type=int, default=8)
+    parser.add_argument('--num-channels', type=int, default=3)
+    args = parser.parse_args()
+    cudnn.benchmark = True
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    model = Net(scale_factor=args.scale,num_channels=args.num_channels,num_features=args.num_features,growth_rate=args.growth_rate,num_layers=args.num_layers,B=args.B, U=args.U).to(device)
+    state_dict = model.state_dict()
+    for n, p in torch.load(args.weights_file, map_location=lambda storage, loc: storage).items():
+        if n in state_dict.keys():
+            state_dict[n].copy_(p)
+        else:
+            raise KeyError(n)
+    model.eval()
+    psnr_average=0
+    img_process_time=0
+    print("----------Urban100 start----------")
+    for i in range(1, 101):
+        start = time.time()  # 시작 시간 저장
+        if i<=9:
+            image_file="data/Urban100/img_00{}.png".format(i)
+        elif i>9 and i<=99:
+            image_file="data/Urban100/img_0{}.png".format(i)
+        elif i==100:
+            image_file="data/Urban100/img_100.png"
+        image = pil_image.open(image_file).convert('RGB')
+        image_width = (image.width // args.scale) * args.scale
+        image_height = (image.height // args.scale) * args.scale
+        
+        hr = image.resize((image_width, image_height), resample=pil_image.BICUBIC)
+        lr = hr.resize((hr.width // args.scale, hr.height // args.scale), resample=pil_image.BICUBIC)
+        bicubic = lr.resize((lr.width * args.scale, lr.height * args.scale), resample=pil_image.BICUBIC)
+        bicubic.save(image_file.replace('.', '_bicubic_x{}.'.format(args.scale)))
+        
+        lr = np.expand_dims(np.array(lr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
+        hr = np.expand_dims(np.array(hr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
+        lr = torch.from_numpy(lr).to(device)
+        hr = torch.from_numpy(hr).to(device)
+        
+        with torch.no_grad():
+            preds = model(lr).squeeze(0)
+        preds_y = convert_rgb_to_y(denormalize(preds), dim_order='chw')
+        hr_y = convert_rgb_to_y(denormalize(hr.squeeze(0)), dim_order='chw')
+        
+        preds_y = preds_y[args.scale:-args.scale, args.scale:-args.scale]
+        hr_y = hr_y[args.scale:-args.scale, args.scale:-args.scale]
+        
+        psnr = calc_psnr(hr_y, preds_y)
+        print('{}..PSNR: {:.2f}'.format(i, psnr))
+        psnr_average=psnr_average+float(psnr)
+        output = pil_image.fromarray(denormalize(preds).permute(1, 2, 0).byte().cpu().numpy())
+        output.save(image_file.replace('.', '_DDRDN_CA_DD_x{}.'.format(args.scale)))
+        img_process_time += time.time() - start
+    Urban100_avg = psnr_average/100
+    Urban100_avg_time = img_process_time/100
+    print("----------Urban100 End----------")
+    
+    psnr_average=0
+    img_process_time=0
+    print("----------BSD100 start----------")
+    for i in range(1, 101):
+        start = time.time()  # 시작 시간 저장
+        if i<=9:
+            image_file="data/BSD100/img_00{}.png".format(i)
+        elif i>9 and i<=99:
+            image_file="data/BSD100/img_0{}.png".format(i)
+        elif i==100:
+            image_file="data/BSD100/img_100.png"
+        image = pil_image.open(image_file).convert('RGB')
+        image_width = (image.width // args.scale) * args.scale
+        image_height = (image.height // args.scale) * args.scale
+        
+        hr = image.resize((image_width, image_height), resample=pil_image.BICUBIC)
+        lr = hr.resize((hr.width // args.scale, hr.height // args.scale), resample=pil_image.BICUBIC)
+        bicubic = lr.resize((lr.width * args.scale, lr.height * args.scale), resample=pil_image.BICUBIC)
+        bicubic.save(image_file.replace('.', '_bicubic_x{}.'.format(args.scale)))
+        
+        lr = np.expand_dims(np.array(lr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
+        hr = np.expand_dims(np.array(hr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
+        lr = torch.from_numpy(lr).to(device)
+        hr = torch.from_numpy(hr).to(device)
+        
+        with torch.no_grad():
+            preds = model(lr).squeeze(0)
+        preds_y = convert_rgb_to_y(denormalize(preds), dim_order='chw')
+        hr_y = convert_rgb_to_y(denormalize(hr.squeeze(0)), dim_order='chw')
+        
+        preds_y = preds_y[args.scale:-args.scale, args.scale:-args.scale]
+        hr_y = hr_y[args.scale:-args.scale, args.scale:-args.scale]
+        
+        psnr = calc_psnr(hr_y, preds_y)
+        print('{}..PSNR: {:.2f}'.format(i, psnr))
+        psnr_average=psnr_average+float(psnr)
+        output = pil_image.fromarray(denormalize(preds).permute(1, 2, 0).byte().cpu().numpy())
+        output.save(image_file.replace('.', '_DDRDN_CA_DD_x{}.'.format(args.scale)))
+        img_process_time += time.time() - start
+    BSD100_avg = psnr_average/100 
+    BSD100_avg_time = img_process_time/100
+    print("----------BSD100 End----------")
+    
+    psnr_average = 0
+    img_process_time = 0
+    print("----------Set14 start----------")
+    for i in range(1, 15):
+        start = time.time()  # 시작 시간 저장
+        if i<=9:
+            image_file="data/Set14/img_00{}.png".format(i)
+        elif i>9 and i<=99:
+            image_file="data/Set14/img_0{}.png".format(i)
+        image = pil_image.open(image_file).convert('RGB')
+        image_width = (image.width // args.scale) * args.scale
+        image_height = (image.height // args.scale) * args.scale
+        
+        hr = image.resize((image_width, image_height), resample=pil_image.BICUBIC)
+        lr = hr.resize((hr.width // args.scale, hr.height // args.scale), resample=pil_image.BICUBIC)
+        bicubic = lr.resize((lr.width * args.scale, lr.height * args.scale), resample=pil_image.BICUBIC)
+        bicubic.save(image_file.replace('.', '_bicubic_x{}.'.format(args.scale)))
+        
+        lr = np.expand_dims(np.array(lr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
+        hr = np.expand_dims(np.array(hr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
+        lr = torch.from_numpy(lr).to(device)
+        hr = torch.from_numpy(hr).to(device)
+        
+        with torch.no_grad():
+            preds = model(lr).squeeze(0)
+        preds_y = convert_rgb_to_y(denormalize(preds), dim_order='chw')
+        hr_y = convert_rgb_to_y(denormalize(hr.squeeze(0)), dim_order='chw')
+        
+        preds_y = preds_y[args.scale:-args.scale, args.scale:-args.scale]
+        hr_y = hr_y[args.scale:-args.scale, args.scale:-args.scale]
+        
+        psnr = calc_psnr(hr_y, preds_y)
+        print('{}..PSNR: {:.2f}'.format(i, psnr))
+        psnr_average=psnr_average+float(psnr)
+        output = pil_image.fromarray(denormalize(preds).permute(1, 2, 0).byte().cpu().numpy())
+        output.save(image_file.replace('.', '_DDRDN_CA_DD_x{}.'.format(args.scale)))
+        img_process_time += time.time() - start
+    Set14_avg = psnr_average/14
+    Set14_avg_time = img_process_time/14
+    print("----------Set14 End----------")
+    
+    psnr_average = 0 
+    img_process_time =0
+    print("----------Set5 start----------")
+    for i in range(1, 6):
+        start = time.time()  # 시작 시간 저장
+        image_file="data/Set5/img_{}.png".format(i)
+        image = pil_image.open(image_file).convert('RGB')
+        image_width = (image.width // args.scale) * args.scale
+        image_height = (image.height // args.scale) * args.scale
+        
+        hr = image.resize((image_width, image_height), resample=pil_image.BICUBIC)
+        lr = hr.resize((hr.width // args.scale, hr.height // args.scale), resample=pil_image.BICUBIC)
+        bicubic = lr.resize((lr.width * args.scale, lr.height * args.scale), resample=pil_image.BICUBIC)
+        bicubic.save(image_file.replace('.', '_bicubic_x{}.'.format(args.scale)))
+        
+        lr = np.expand_dims(np.array(lr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
+        hr = np.expand_dims(np.array(hr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
+        lr = torch.from_numpy(lr).to(device)
+        hr = torch.from_numpy(hr).to(device)
+        
+        with torch.no_grad():
+            preds = model(lr).squeeze(0)
+        preds_y = convert_rgb_to_y(denormalize(preds), dim_order='chw')
+        hr_y = convert_rgb_to_y(denormalize(hr.squeeze(0)), dim_order='chw')
+        
+        preds_y = preds_y[args.scale:-args.scale, args.scale:-args.scale]
+        hr_y = hr_y[args.scale:-args.scale, args.scale:-args.scale]
+        
+        psnr = calc_psnr(hr_y, preds_y)
+        print('{}..PSNR: {:.2f}'.format(i, psnr))
+        psnr_average=psnr_average+float(psnr)
+        output = pil_image.fromarray(denormalize(preds).permute(1, 2, 0).byte().cpu().numpy())
+        output.save(image_file.replace('.', '_DDRDN_CA_DD_x{}.'.format(args.scale)))
+        img_process_time += time.time() - start
+    Set5_avg = psnr_average/5
+    Set5_avg_time = img_process_time/5
+    print("----------Set5 End----------")
+    
+    psnr_average = 0
+    img_process_time = 0
+    print('Set5 average psnr : %0.2f' %(Set5_avg))
+    print('Set5 average time : %0.2f' %(Set5_avg_time))
+    print('Set14 average psnr : %0.2f' %(Set14_avg))
+    print('Set14 average time : %0.2f' %(Set14_avg_time))
+    print('BSD100 average psnr : %0.2f' %(BSD100_avg))
+    print('BSD100 average time : %0.2f' %(BSD100_avg_time))
+    print('Urban100 average psnr : %0.2f' %(Urban100_avg))
+    print('Urban100 average time : %0.2f' %(Urban100_avg_time))
