@@ -35,7 +35,6 @@ Evaluation of Set5, Set14, BSD100, Urban100 using PSNR, SSIM
 * Comparison of number of parameters and performance according to the number of recursions
 ![image](https://user-images.githubusercontent.com/61686244/106460243-5e220980-64d6-11eb-97c7-af3f7ab6c580.png)
 * Comparison of performance by technique
-
 ![image](https://user-images.githubusercontent.com/61686244/106460273-6f6b1600-64d6-11eb-9b39-2da2482d8848.png)
 * Scale 2
 ![image](https://user-images.githubusercontent.com/61686244/106460365-97f31000-64d6-11eb-8a26-155eabab0d97.png)
