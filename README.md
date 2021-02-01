@@ -2,13 +2,4 @@
 
 ## Single Image Super Resolution Based on Residual Dense Channel Attention Block-RecursiveSRNet (2021.02)
 ## Abstract
-최근 심층 합성곱 신경망 학습의 발전에 따라 단일 영상 초해상도에 적용되는 심층 학습 기법들은
-좋은 성과를 보여주고 있다. 현존하는 딥러닝 기반 초해상도 기법들 중 하나로 잔여 밀집 블록을 이용
-하여 초기의 특징 정보를 마지막 계층에 전달하여 이후의 계층들이 이전의 계층들의 입력정보를 사용
-하여 복원하는 RDN(Residual Dense Network)이 있다. 하지만 계층적인 모든 특징을 연결하여 학습하고
-다수의 잔여 밀집 블록을 쌓게 되면 좋은 성능에도 불구하고 많은 파라미터의 수를 가지게 되어 네트
-워크를 학습하는데 많은 시간이 소요되며 모바일 시스템에 적용이 어렵다는 단점을 가지고 있다. 본
-논문에서는 잔여 밀집 구조와 채널 집중 기법을 갖는 재귀적 경량 네트워크 기반의 단일 영상 초해상
-도 네트워크를 제안한다. 실험 결과 제안하는 네트워크는 RDN과 비교 하였을 때 1.18배 더 빠른 처리
-속도로 비슷한 성능을 만들어냈으며 약 10배 더 적은 파라미터의 수를 가져 계산량을 줄일 수 있었다.
-
+With the recent development of deep convolutional neural network learning, deep learning techniques applied to the super-resolution of single images are showing good results. One of the existing deep learning-based super-resolution techniques is RDN (Residual Dense Network), in which initial feature information is transmitted to the last layer using residual dense blocks, and subsequent layers are restored using input information of previous layers. . However, if all hierarchical features are connected and learned and a large number of residual dense blocks are stacked, despite good performance, a large number of parameters is obtained, so it takes a lot of time to learn the network, and it is difficult to apply it to a mobile system. In this paper, we propose a single image super-resolution network based on a recursive lightweight network with a residual dense structure and a channel concentration scheme. As a result of the experiment, the proposed network produced similar performance with 1.18 times faster processing speed compared to RDN, and it was able to reduce the computation amount by having about 10 times fewer parameters.
