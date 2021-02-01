@@ -12,5 +12,6 @@ With the recent development of deep convolutional neural network learning, deep 
 
 ### Train
 |Dataset|Scale|
+|-------|-----|
 |Div2K|x2|
 
