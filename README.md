@@ -1,6 +1,14 @@
 # RDCAB-RecursiveSRNet
 
 ## Single Image Super Resolution Based on Residual Dense Channel Attention Block-RecursiveSRNet (2021.02)
-* Experiment Environment : Ubuntu 16.04 / Cuda 10.0 / Cudnn : 7.6.5 / GTX 1660 Super 6GB
-* heejo5@naver.com
+## Abstract
+최근 심층 합성곱 신경망 학습의 발전에 따라 단일 영상 초해상도에 적용되는 심층 학습 기법들은
+좋은 성과를 보여주고 있다. 현존하는 딥러닝 기반 초해상도 기법들 중 하나로 잔여 밀집 블록을 이용
+하여 초기의 특징 정보를 마지막 계층에 전달하여 이후의 계층들이 이전의 계층들의 입력정보를 사용
+하여 복원하는 RDN(Residual Dense Network)이 있다. 하지만 계층적인 모든 특징을 연결하여 학습하고
+다수의 잔여 밀집 블록을 쌓게 되면 좋은 성능에도 불구하고 많은 파라미터의 수를 가지게 되어 네트
+워크를 학습하는데 많은 시간이 소요되며 모바일 시스템에 적용이 어렵다는 단점을 가지고 있다. 본
+논문에서는 잔여 밀집 구조와 채널 집중 기법을 갖는 재귀적 경량 네트워크 기반의 단일 영상 초해상
+도 네트워크를 제안한다. 실험 결과 제안하는 네트워크는 RDN과 비교 하였을 때 1.18배 더 빠른 처리
+속도로 비슷한 성능을 만들어냈으며 약 10배 더 적은 파라미터의 수를 가져 계산량을 줄일 수 있었다.
 
