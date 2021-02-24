@@ -11,7 +11,7 @@ With the recent development of deep convolutional neural network learning, deep 
 ![RDCAB](https://user-images.githubusercontent.com/61686244/106457205-f8cc1980-64d1-11eb-8645-2327f04d305d.png)
 
 ## Train
-Ubuntu 16.04, 1660 Super 6G
+Ubuntu 16.04, GTX 1660 Super 6G
 
 The DIV2K, Set5 dataset converted to HDF5 can be downloaded from the links below.
 |Dataset|Scale|Type|Link|
