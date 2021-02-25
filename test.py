@@ -19,6 +19,7 @@ if __name__ == '__main__':
     parser.add_argument('--growth-rate', type=int, default=64)
     parser.add_argument('--num-layers', type=int, default=8)
     parser.add_argument('--num-channels', type=int, default=3)
+    parser.add_argument('--self-ensemble', type=bool, default=False)
     args = parser.parse_args()
     cudnn.benchmark = True
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -29,6 +30,50 @@ if __name__ == '__main__':
             state_dict[n].copy_(p)
         else:
             raise KeyError(n)
+##############################################
+##Self-Ensemble
+##############################################
+    def x8_forward(img, model, precision='single'):
+        def _transform(v, op):
+            if precision != 'single': v = v.float()
+
+            v2np = v.data.cpu().numpy()
+            if op == 'vflip':
+                tfnp = v2np[:, :, :, ::-1].copy()
+            elif op == 'hflip':
+                tfnp = v2np[:, :, ::-1, :].copy()
+            elif op == 'transpose':
+                tfnp = v2np.transpose((0, 1, 3, 2)).copy()
+            
+            ret = torch.Tensor(tfnp).cuda()
+
+            if precision == 'half':
+                ret = ret.half()
+            elif precision == 'double':
+                ret = ret.double()
+
+            with torch.no_grad():
+                ret = Variable(ret)
+
+            return ret
+
+        inputlist = [img]
+        for tf in 'vflip', 'hflip', 'transpose':
+            inputlist.extend([_transform(t, tf) for t in inputlist])
+
+        outputlist = [model(aug) for aug in inputlist]
+        for i in range(len(outputlist)):
+            if i > 3:
+                outputlist[i] = _transform(outputlist[i], 'transpose')
+            if i % 4 > 1:
+                outputlist[i] = _transform(outputlist[i], 'hflip')
+            if (i % 4) % 2 == 1:
+                outputlist[i] = _transform(outputlist[i], 'vflip')
+        
+        output = reduce((lambda x, y: x + y), outputlist) / len(outputlist)
+
+        return output
+##############################################            
     model.eval()
     psnr_average=0
     img_process_time=0
@@ -55,8 +100,16 @@ if __name__ == '__main__':
         lr = torch.from_numpy(lr).to(device)
         hr = torch.from_numpy(hr).to(device)
         
-        with torch.no_grad():
-            preds = model(lr).squeeze(0)
+        if args.self_ensemble:
+            with torch.no_grad():
+                Urban100_start = time.time()  # 시작 시간 저장
+                preds = x8_forward(lr,model).squeeze(0)
+                Urban100_img_process_ex=time.time()-Urban100_start
+        else :
+            with torch.no_grad():
+                Urban100_start = time.time()  # 시작 시간 저장
+                preds = model(lr).squeeze(0)
+                Urban100_img_process_ex=time.time()-Urban100_start
         preds_y = convert_rgb_to_y(denormalize(preds), dim_order='chw')
         hr_y = convert_rgb_to_y(denormalize(hr.squeeze(0)), dim_order='chw')
         
@@ -98,8 +151,16 @@ if __name__ == '__main__':
         lr = torch.from_numpy(lr).to(device)
         hr = torch.from_numpy(hr).to(device)
         
-        with torch.no_grad():
-            preds = model(lr).squeeze(0)
+        if args.self_ensemble:
+            with torch.no_grad():
+                BSD100_start = time.time()  # 시작 시간 저장
+                preds = x8_forward(lr,model).squeeze(0)
+                BSD100_img_process_ex=time.time()-BSD100_start
+        else :
+            with torch.no_grad():
+                BSD100_start = time.time()  # 시작 시간 저장
+                preds = model(lr).squeeze(0)
+                BSD100_img_process_ex=time.time()-BSD100_start
         preds_y = convert_rgb_to_y(denormalize(preds), dim_order='chw')
         hr_y = convert_rgb_to_y(denormalize(hr.squeeze(0)), dim_order='chw')
         
@@ -139,8 +200,16 @@ if __name__ == '__main__':
         lr = torch.from_numpy(lr).to(device)
         hr = torch.from_numpy(hr).to(device)
         
-        with torch.no_grad():
-            preds = model(lr).squeeze(0)
+        if args.self_ensemble:
+            with torch.no_grad():
+                Set14_start = time.time()  # 시작 시간 저장
+                preds = x8_forward(lr,model).squeeze(0)
+                Set14_img_process_ex=time.time()-Set14_start
+        else :
+            with torch.no_grad():
+                Set14_start = time.time()  # 시작 시간 저장
+                preds = model(lr).squeeze(0)
+                Set14_img_process_ex=time.time()-Set14_start
         preds_y = convert_rgb_to_y(denormalize(preds), dim_order='chw')
         hr_y = convert_rgb_to_y(denormalize(hr.squeeze(0)), dim_order='chw')
         
@@ -177,8 +246,16 @@ if __name__ == '__main__':
         lr = torch.from_numpy(lr).to(device)
         hr = torch.from_numpy(hr).to(device)
         
-        with torch.no_grad():
-            preds = model(lr).squeeze(0)
+        if args.self_ensemble:
+            with torch.no_grad():
+                Set5_start = time.time()  # 시작 시간 저장
+                preds = x8_forward(lr,model).squeeze(0)
+                Set5_img_process_ex=time.time()-Set5_start
+        else :
+            with torch.no_grad():
+                Set5_start = time.time()  # 시작 시간 저장
+                preds = model(lr).squeeze(0)
+                Set5_img_process_ex=time.time()-Set5_start
         preds_y = convert_rgb_to_y(denormalize(preds), dim_order='chw')
         hr_y = convert_rgb_to_y(denormalize(hr.squeeze(0)), dim_order='chw')
         
