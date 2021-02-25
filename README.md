@@ -48,7 +48,7 @@ Evaluation of Set5, Set14, BSD100, Urban100 using PSNR, SSIM
 
 
 ## Modify
-* Add self-ensemble to test.py
+* Add self-ensemble to test.py (2021.02.25)
 
 
 
