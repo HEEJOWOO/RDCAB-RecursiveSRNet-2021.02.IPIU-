@@ -79,7 +79,6 @@ if __name__ == '__main__':
     img_process_time=0
     print("----------Urban100 start----------")
     for i in range(1, 101):
-        
         if i<=9:
             image_file="data/Urban100/x{}/img_00{}_SRF_{}_HR.png".format(args.scale,i,args.scale)
         elif i>9 and i<=99:
@@ -89,22 +88,17 @@ if __name__ == '__main__':
             image_file="data/Urban100/x{}/img_100_SRF_{}_HR.png".format(args.scale,args.scale)
                 
         image = pil_image.open(image_file).convert('RGB')
-
-        image_width = (image.width // args.scale) * args.scale
+		image_width = (image.width // args.scale) * args.scale
         image_height = (image.height // args.scale) * args.scale
-
-        hr = image.resize((image_width, image_height), resample=pil_image.BICUBIC)
+		hr = image.resize((image_width, image_height), resample=pil_image.BICUBIC)
         lr = hr.resize((hr.width // args.scale, hr.height // args.scale), resample=pil_image.BICUBIC)
         bicubic = lr.resize((lr.width * args.scale, lr.height * args.scale), resample=pil_image.BICUBIC)
         bicubic.save(image_file.replace('.', '_bicubic_x{}.'.format(args.scale)))
-
-        lr = np.expand_dims(np.array(lr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
+		lr = np.expand_dims(np.array(lr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
         hr = np.expand_dims(np.array(hr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
         lr = torch.from_numpy(lr).to(device)
         hr = torch.from_numpy(hr).to(device)
-
-        
-        if args.self_ensemble:
+		if args.self_ensemble:
             with torch.no_grad():
                 Urban100_start = time.time()  # 시작 시간 저장
                 preds = x8_forward(lr,model).squeeze(0)
@@ -116,29 +110,22 @@ if __name__ == '__main__':
                 Urban100_img_process_ex=time.time()-Urban100_start
         preds_y = convert_rgb_to_y(denormalize(preds), dim_order='chw')
         hr_y = convert_rgb_to_y(denormalize(hr.squeeze(0)), dim_order='chw')
-
-        preds_y = preds_y[args.scale:-args.scale, args.scale:-args.scale]
+		preds_y = preds_y[args.scale:-args.scale, args.scale:-args.scale]
         hr_y = hr_y[args.scale:-args.scale, args.scale:-args.scale]
-
-        psnr = calc_psnr(hr_y, preds_y)
+		psnr = calc_psnr(hr_y, preds_y)
         print('{}..PSNR: {:.6f}'.format(i, psnr))
-        
         print('Urban100_img_process_time : {:.2f}'.format(Urban100_img_process_ex))
         img_process_time += Urban100_img_process_ex
         psnr_average=psnr_average+float(psnr)
-           
-        
-        output = pil_image.fromarray(denormalize(preds).permute(1, 2, 0).byte().cpu().numpy())
+		output = pil_image.fromarray(denormalize(preds).permute(1, 2, 0).byte().cpu().numpy())
         output.save(image_file.replace('.', '_RDCAB_x{}.'.format(args.scale)))
-        
-    Urban100_avg = psnr_average/100
+	Urban100_avg = psnr_average/100
     Urban100_avg_time = img_process_time/100
     print("----------Urban100 End----------")
     psnr_average=0
     img_process_time=0
     print("----------BSD100 start----------")
     for i in range(1, 101):
-        
         if i<=9:
             image_file="data/BSD100/x{}/img_00{}_SRF_{}_HR.png".format(args.scale,i,args.scale)
         elif i>9 and i<=99:
@@ -148,22 +135,17 @@ if __name__ == '__main__':
             image_file="data/BSD100/x{}/img_100_SRF_{}_HR.png".format(args.scale,args.scale)
                 
         image = pil_image.open(image_file).convert('RGB')
-
-        image_width = (image.width // args.scale) * args.scale
+		image_width = (image.width // args.scale) * args.scale
         image_height = (image.height // args.scale) * args.scale
-
-        hr = image.resize((image_width, image_height), resample=pil_image.BICUBIC)
+		hr = image.resize((image_width, image_height), resample=pil_image.BICUBIC)
         lr = hr.resize((hr.width // args.scale, hr.height // args.scale), resample=pil_image.BICUBIC)
         bicubic = lr.resize((lr.width * args.scale, lr.height * args.scale), resample=pil_image.BICUBIC)
         bicubic.save(image_file.replace('.', '_bicubic_x{}.'.format(args.scale)))
-
-        lr = np.expand_dims(np.array(lr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
+		lr = np.expand_dims(np.array(lr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
         hr = np.expand_dims(np.array(hr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
         lr = torch.from_numpy(lr).to(device)
         hr = torch.from_numpy(hr).to(device)
-
-        
-        if args.self_ensemble:
+		if args.self_ensemble:
             with torch.no_grad():
                 BSD100_start = time.time()  # 시작 시간 저장
                 preds = x8_forward(lr,model).squeeze(0)
@@ -176,53 +158,38 @@ if __name__ == '__main__':
         
         preds_y = convert_rgb_to_y(denormalize(preds), dim_order='chw')
         hr_y = convert_rgb_to_y(denormalize(hr.squeeze(0)), dim_order='chw')
-
-        preds_y = preds_y[args.scale:-args.scale, args.scale:-args.scale]
+		preds_y = preds_y[args.scale:-args.scale, args.scale:-args.scale]
         hr_y = hr_y[args.scale:-args.scale, args.scale:-args.scale]
-
-        psnr = calc_psnr(hr_y, preds_y)
+		psnr = calc_psnr(hr_y, preds_y)
         print('{}..PSNR: {:.2f}'.format(i, psnr))
-        
-        print('BSD100_img_process_time : {:.6f}'.format(BSD100_img_process_ex))
+		print('BSD100_img_process_time : {:.6f}'.format(BSD100_img_process_ex))
         img_process_time += BSD100_img_process_ex
         psnr_average=psnr_average+float(psnr)
-           
-        
-        output = pil_image.fromarray(denormalize(preds).permute(1, 2, 0).byte().cpu().numpy())
+		output = pil_image.fromarray(denormalize(preds).permute(1, 2, 0).byte().cpu().numpy())
         output.save(image_file.replace('.', '_RDCAB_x{}.'.format(args.scale)))
-
-    BSD100_avg = psnr_average/100 
+	BSD100_avg = psnr_average/100 
     BSD100_avg_time = img_process_time/100
     print("----------BSD100 End----------")
     psnr_average = 0
     img_process_time = 0
     print("----------Set14 start----------")
     for i in range(1, 15):
-        
-        if i<=9:
+		if i<=9:
             image_file="data/Set14/x{}/img_00{}_SRF_{}_HR.png".format(args.scale,i,args.scale)
         elif i>9 and i<=14:
             image_file="data/Set14/x{}/img_0{}_SRF_{}_HR.png".format(args.scale,i,args.scale)
-        
-        
-                
-        image = pil_image.open(image_file).convert('RGB')
-
-        image_width = (image.width // args.scale) * args.scale
+		image = pil_image.open(image_file).convert('RGB')
+		image_width = (image.width // args.scale) * args.scale
         image_height = (image.height // args.scale) * args.scale
-
-        hr = image.resize((image_width, image_height), resample=pil_image.BICUBIC)
+		hr = image.resize((image_width, image_height), resample=pil_image.BICUBIC)
         lr = hr.resize((hr.width // args.scale, hr.height // args.scale), resample=pil_image.BICUBIC)
         bicubic = lr.resize((lr.width * args.scale, lr.height * args.scale), resample=pil_image.BICUBIC)
         bicubic.save(image_file.replace('.', '_bicubic_x{}.'.format(args.scale)))
-
-        lr = np.expand_dims(np.array(lr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
+		lr = np.expand_dims(np.array(lr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
         hr = np.expand_dims(np.array(hr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
         lr = torch.from_numpy(lr).to(device)
         hr = torch.from_numpy(hr).to(device)
-
-        
-        if args.self_ensemble:
+		if args.self_ensemble:
             with torch.no_grad():
                 Set14_start = time.time()  # 시작 시간 저장
                 preds = x8_forward(lr,model).squeeze(0)
@@ -232,50 +199,37 @@ if __name__ == '__main__':
                 Set14_start = time.time()  # 시작 시간 저장
                 preds = model(lr).squeeze(0)
                 Set14_img_process_ex=time.time()-Set14_start
-        
         preds_y = convert_rgb_to_y(denormalize(preds), dim_order='chw')
         hr_y = convert_rgb_to_y(denormalize(hr.squeeze(0)), dim_order='chw')
-
-        preds_y = preds_y[args.scale:-args.scale, args.scale:-args.scale]
+		preds_y = preds_y[args.scale:-args.scale, args.scale:-args.scale]
         hr_y = hr_y[args.scale:-args.scale, args.scale:-args.scale]
-
-        psnr = calc_psnr(hr_y, preds_y)
+		psnr = calc_psnr(hr_y, preds_y)
         print('{}..PSNR: {:.2f}'.format(i, psnr))
-        
         print('Set14_img_process_time : {:.6f}'.format(Set14_img_process_ex))
         img_process_time += Set14_img_process_ex
         psnr_average=psnr_average+float(psnr)
-           
-        
-        output = pil_image.fromarray(denormalize(preds).permute(1, 2, 0).byte().cpu().numpy())
+		output = pil_image.fromarray(denormalize(preds).permute(1, 2, 0).byte().cpu().numpy())
         output.save(image_file.replace('.', '_RDCAB_x{}.'.format(args.scale)))
-
-    Set14_avg = psnr_average/14
+	Set14_avg = psnr_average/14
     Set14_avg_time = img_process_time/14
     print("----------Set14 End----------")
     psnr_average = 0 
     img_process_time =0
     print("----------Set5 start----------")
     for i in range(1, 6):
-        
         image_file="data/Set5/x{}/img_00{}_SRF_{}_HR.png".format(args.scale,i,args.scale)
         image = pil_image.open(image_file).convert('RGB')
-
-        image_width = (image.width // args.scale) * args.scale
+		image_width = (image.width // args.scale) * args.scale
         image_height = (image.height // args.scale) * args.scale
-
-        hr = image.resize((image_width, image_height), resample=pil_image.BICUBIC)
+		hr = image.resize((image_width, image_height), resample=pil_image.BICUBIC)
         lr = hr.resize((hr.width // args.scale, hr.height // args.scale), resample=pil_image.BICUBIC)
         bicubic = lr.resize((lr.width * args.scale, lr.height * args.scale), resample=pil_image.BICUBIC)
         bicubic.save(image_file.replace('.', '_bicubic_x{}.'.format(args.scale)))
-
-        lr = np.expand_dims(np.array(lr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
+		lr = np.expand_dims(np.array(lr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
         hr = np.expand_dims(np.array(hr).astype(np.float32).transpose([2, 0, 1]), 0) / 255.0
         lr = torch.from_numpy(lr).to(device)
         hr = torch.from_numpy(hr).to(device)
-
-        
-        if args.self_ensemble:
+		if args.self_ensemble:
             with torch.no_grad():
                 Set5_start = time.time()  # 시작 시간 저장
                 preds = x8_forward(lr,model).squeeze(0)
@@ -285,25 +239,19 @@ if __name__ == '__main__':
                 Set5_start = time.time()  # 시작 시간 저장
                 preds = model(lr).squeeze(0)
                 Set5_img_process_ex=time.time()-Set5_start
-        
         preds_y = convert_rgb_to_y(denormalize(preds), dim_order='chw')
         hr_y = convert_rgb_to_y(denormalize(hr.squeeze(0)), dim_order='chw')
-
-        preds_y = preds_y[args.scale:-args.scale, args.scale:-args.scale]
+		preds_y = preds_y[args.scale:-args.scale, args.scale:-args.scale]
         hr_y = hr_y[args.scale:-args.scale, args.scale:-args.scale]
-
-        psnr = calc_psnr(hr_y, preds_y)
+		psnr = calc_psnr(hr_y, preds_y)
         print('{}..PSNR: {:.2f}'.format(i, psnr))
         Set5_img_process_ex=time.time()-Set5_start
         print('Set5_img_process_time : {:.6f}'.format(Set5_img_process_ex))
         img_process_time += Set5_img_process_ex
         psnr_average=psnr_average+float(psnr)
-           
-        
-        output = pil_image.fromarray(denormalize(preds).permute(1, 2, 0).byte().cpu().numpy())
+		output = pil_image.fromarray(denormalize(preds).permute(1, 2, 0).byte().cpu().numpy())
         output.save(image_file.replace('.', '_RDCAB_x{}.'.format(args.scale)))
-        
-    Set5_avg = psnr_average/5
+	Set5_avg = psnr_average/5
     Set5_avg_time = img_process_time/5
     print("----------Set5 End----------")
     psnr_average = 0
